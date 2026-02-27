@@ -1,0 +1,480 @@
+import React, { useEffect, useRef, useState } from "react";
+
+/**
+ * Cover2 Solutions — Bonded Commercial Janitorial Service (Full Site)
+ * Fix build: restore COMPLETE component tree instead of partial snippet.
+ * Also preserves your last request: Services images #2 and #3 are swapped.
+ */
+
+const PAYMENT_PORTAL_URL = "https://example.com/pay"; // replace with your real payment URL
+const PREFER_STATIC_IMAGES = false;
+
+// ---- Images ----
+const STATIC_IMAGES = {
+  heroBg:
+    "https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop",
+  heroTeam:
+    "https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1000&fit=crop",
+  services: [
+    // Service #1: cubicle office image
+    "https://images.pexels.com/photos/3727459/pexels-photo-3727459.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1000&fit=crop",
+    // Swapped: previously #3 vibrant meeting photo
+    "https://images.pexels.com/photos/1181414/pexels-photo-1181414.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1000&fit=crop",
+    // Swapped: previously #2 generic office teamwork photo
+    "https://images.pexels.com/photos/3182796/pexels-photo-3182796.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1000&fit=crop",
+  ],
+  history:
+    "https://images.pexels.com/photos/1181395/pexels-photo-1181395.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1000&fit=crop",
+  about:
+    "https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1600&h=1000&fit=crop",
+};
+
+const FALLBACK_IMAGES = { ...STATIC_IMAGES } as const;
+
+// ---- Helpers ----
+const chooseImage = (
+  preferStatic: boolean,
+  staticPath?: string,
+  fallbackUrl?: string
+) => {
+  const staticValid = typeof staticPath === "string" && staticPath.length > 0;
+  const fallbackValid =
+    typeof fallbackUrl === "string" && /^https?:\/\//.test(fallbackUrl || "");
+  if (preferStatic && staticValid) return staticPath!;
+  if (fallbackValid) return fallbackUrl!;
+  return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAgMBc4nq7uYAAAAASUVORK5CYII=";
+};
+
+const SmartImg = ({
+  staticSrc,
+  fallbackSrc,
+  alt,
+  className,
+  style,
+}: {
+  staticSrc?: string;
+  fallbackSrc?: string;
+  alt: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) => {
+  const initial = chooseImage(PREFER_STATIC_IMAGES, staticSrc, fallbackSrc);
+  const [src, setSrc] = useState(initial);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      style={style}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        const fb = chooseImage(false, staticSrc, fallbackSrc);
+        if (src !== fb) setSrc(fb);
+      }}
+    />
+  );
+};
+
+function useOnClickOutside(
+  ref: React.RefObject<HTMLElement>,
+  handler: (e: Event) => void
+) {
+  useEffect(() => {
+    const listener = (event: Event) => {
+      if (!ref.current || (event.target instanceof Node && ref.current.contains(event.target)))
+        return;
+      handler(event);
+    };
+    document.addEventListener("mousedown", listener);
+    document.addEventListener("touchstart", listener);
+    return () => {
+      document.removeEventListener("mousedown", listener);
+      document.removeEventListener("touchstart", listener);
+    };
+  }, [ref, handler]);
+}
+
+// ---- UI Components ----
+const Nav = () => {
+  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const ddRef = useRef<HTMLDivElement>(null);
+  useOnClickOutside(ddRef, () => setOpen(false));
+
+  return (
+    <header className="sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
+        <a href="#top" className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-green-700 text-white grid place-items-center font-bold">C2</div>
+          <div>
+            <p className="text-xl font-semibold leading-none">Cover2 Solutions</p>
+            <p className="text-xs text-gray-500">Bonded • Licensed • Insured</p>
+          </div>
+        </a>
+
+        <nav className="hidden items-center gap-2 md:flex">
+          <a href="#services" className="rounded-xl px-3 py-2 text-sm font-medium hover:bg-gray-100">Services</a>
+          <a href="#about" className="rounded-xl px-3 py-2 text-sm font-medium hover:bg-gray-100">About</a>
+          <a href="#contact" className="rounded-xl px-3 py-2 text-sm font-medium hover:bg-gray-100">Contact</a>
+
+          <div className="relative" ref={ddRef}>
+            <button
+              className="rounded-xl border px-3 py-2 text-sm font-medium hover:bg-gray-100"
+              onClick={() => setOpen((v) => !v)}
+            >
+              Get Started ▾
+            </button>
+            {open && (
+              <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border bg-white shadow-xl">
+                <div className="p-2">
+                  <a
+                    href="#history"
+                    className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    Company History
+                  </a>
+                  <a
+                    href="#quote"
+                    className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    Service Quotes
+                  </a>
+                  <a
+                    href="#email"
+                    className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    Email Requests
+                  </a>
+                  <a
+                    href={PAYMENT_PORTAL_URL}
+                    className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100"
+                  >
+                    Payment Portal
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </nav>
+
+        <button
+          className="rounded-xl border px-3 py-2 md:hidden"
+          onClick={() => setMobileOpen((v) => !v)}
+        >
+          Menu
+        </button>
+      </div>
+
+      {mobileOpen && (
+        <div className="md:hidden border-t bg-white">
+          <div className="space-y-1 p-3">
+            {["Services", "About", "Contact"].map((label) => (
+              <a
+                key={label}
+                href={`#${label.toLowerCase()}`}
+                className="block rounded-xl px-3 py-2 text-sm font-medium hover:bg-gray-100"
+              >
+                {label}
+              </a>
+            ))}
+            <div className="border-t pt-3">
+              <a href="#history" className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100">
+                Company History
+              </a>
+              <a href="#quote" className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100">
+                Service Quotes
+              </a>
+              <a href="#email" className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100">
+                Email Requests
+              </a>
+              <a
+                href={PAYMENT_PORTAL_URL}
+                className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-100"
+              >
+                Payment Portal
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+const Hero = () => (
+  <section id="top" className="relative overflow-hidden">
+    <div className="absolute inset-0 -z-10">
+      <SmartImg
+        staticSrc={STATIC_IMAGES.heroBg}
+        fallbackSrc={FALLBACK_IMAGES.heroBg}
+        alt="African American male executive in professional office environment"
+        className="h-full w-full object-cover object-center opacity-80"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/80 to-white" />
+    </div>
+
+    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-20 md:grid-cols-2 md:px-6">
+      <div className="flex flex-col justify-center">
+        <h1 className="text-4xl font-bold md:text-5xl text-green-800">
+          Professional Cleaning. Trusted Results.
+        </h1>
+        <p className="mt-4 max-w-prose text-gray-600">
+          Bonded, licensed, and insured commercial janitorial services for offices and workplaces across California. Our trained crews deliver consistent, spotless results you can depend on.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a href={`mailto:info@cover2solutions.net?subject=${encodeURIComponent('Service Quote Request')}`}>
+            <button className="rounded-2xl bg-green-700 px-6 py-3 text-base font-medium text-white hover:bg-green-800">
+              Request a Quote
+            </button>
+          </a>
+          <a href={PAYMENT_PORTAL_URL}>
+            <button className="rounded-2xl border px-6 py-3 text-base font-medium hover:bg-gray-100">
+              Pay Invoice
+            </button>
+          </a>
+        </div>
+      </div>
+
+      <div className="relative">
+        <SmartImg
+          staticSrc={STATIC_IMAGES.heroTeam}
+          fallbackSrc={FALLBACK_IMAGES.heroTeam}
+          alt="African American male in an office meeting setting"
+          className="aspect-[4/3] w-full rounded-2xl object-cover shadow-2xl"
+        />
+      </div>
+    </div>
+  </section>
+);
+
+const Services = () => (
+  <section id="services" className="mx-auto max-w-7xl px-4 py-16 md:px-6">
+    <div className="mx-auto mb-10 max-w-2xl text-center">
+      <h2 className="text-3xl font-semibold md:text-4xl text-green-800">
+        Our Janitorial Services
+      </h2>
+      <p className="mt-3 text-gray-600">
+        Comprehensive, bonded cleaning solutions tailored to your facility’s needs.
+      </p>
+    </div>
+
+    <div className="grid gap-6 md:grid-cols-3">
+      {["Office Cleaning", "Common Areas & Lobbies", "Conference & Specialty"].map((title, i) => (
+        <div key={title} className="rounded-2xl border p-4">
+          <div className="mb-3 text-lg font-semibold">{title}</div>
+          <SmartImg
+            staticSrc={STATIC_IMAGES.services[i]}
+            fallbackSrc={FALLBACK_IMAGES.services[i]}
+            alt={`Service: ${title}`}
+            className="aspect-[16/10] w-full rounded-xl object-cover"
+          />
+          <p className="mt-3 text-sm text-gray-600">
+            {title === "Office Cleaning" &&
+              "Daily, weekly, or monthly cleaning to keep workspaces spotless and healthy."}
+            {title === "Common Areas & Lobbies" &&
+              "High-traffic area maintenance—lobbies, restrooms, kitchens—with eco-friendly supplies."}
+            {title === "Conference & Specialty" &&
+              "Conference room resets, floor care, interior glass, and post-project cleanup."}
+          </p>
+          <a href="#quote">
+            <button className="mt-3 w-full rounded-xl border px-3 py-2 text-sm font-medium hover:bg-gray-100">
+              Get a Quote
+            </button>
+          </a>
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+const HistorySection = () => (
+  <section id="history" className="mx-auto max-w-7xl px-4 py-16 md:px-6">
+    <div className="grid items-center gap-8 md:grid-cols-2">
+      <div>
+        <h2 className="text-3xl font-semibold md:text-4xl text-green-800">
+          Company History
+        </h2>
+        <p className="mt-4 text-gray-600">
+          Cover2 Solutions began with a single goal—raise the standard of commercial janitorial care. Today, we’re a trusted partner for workplaces across California.
+        </p>
+        <ul className="mt-6 space-y-3 text-sm text-gray-700">
+          <li>• Family-owned and operated</li>
+          <li>• Fully bonded, licensed, and insured</li>
+          <li>• Environmentally responsible products</li>
+          <li>• Professionally trained cleaning crews</li>
+        </ul>
+      </div>
+      <SmartImg
+        staticSrc={STATIC_IMAGES.history}
+        fallbackSrc={FALLBACK_IMAGES.history}
+        alt="Office hallway being cleaned"
+        className="aspect-[16/11] w-full rounded-2xl object-cover shadow"
+      />
+    </div>
+  </section>
+);
+
+const QuoteSection = () => (
+  <section id="quote" className="mx-auto max-w-7xl px-4 py-16 md:px-6">
+    <div className="mx-auto max-w-2xl text-center">
+      <h2 className="text-3xl font-semibold md:text-4xl text-green-800">
+        Request a Service Quote
+      </h2>
+      <p className="mt-2 text-gray-600">
+        Submit a quick request—replace this placeholder with your CRM or form handler later.
+      </p>
+    </div>
+
+    <form className="mx-auto mt-8 grid max-w-2xl gap-4">
+      <div className="grid gap-2 md:grid-cols-2">
+        <input className="rounded-xl border p-3" placeholder="Full Name" />
+        <input className="rounded-xl border p-3" placeholder="Company" />
+      </div>
+      <div className="grid gap-2 md:grid-cols-2">
+        <input className="rounded-xl border p-3" placeholder="Email" type="email" />
+        <input className="rounded-xl border p-3" placeholder="Phone" />
+      </div>
+      <textarea
+        className="min-h-32 rounded-xl border p-3"
+        placeholder="What areas do you need cleaned?"
+      />
+      <button
+        className="rounded-2xl bg-green-700 px-6 py-3 text-base font-medium text-white hover:bg-green-800"
+        type="button"
+      >
+        Submit Request (placeholder)
+      </button>
+      <p className="text-xs text-gray-500">
+        This button is non-functional by design—replace with your integration.
+      </p>
+    </form>
+  </section>
+);
+
+const EmailSection = () => (
+  <section id="email" className="mx-auto max-w-7xl px-4 py-16 md:px-6">
+    <div className="mx-auto max-w-2xl text-center">
+      <h2 className="text-3xl font-semibold md:text-4xl text-green-800">
+        Email Requests
+      </h2>
+      <p className="mt-2 text-gray-600">
+        Prefer email? This button opens your mail client with a pre-filled subject.
+      </p>
+    </div>
+
+    <div className="mx-auto mt-8 max-w-2xl rounded-2xl border p-6 text-center">
+      <a
+        href={`mailto:info@cover2solutions.net?subject=${encodeURIComponent("Service Request from Website")}`}
+      >
+        <button className="rounded-2xl border px-4 py-2 text-sm font-medium hover:bg-gray-100">
+          ✉️ Email Cover2 Solutions
+        </button>
+      </a>
+      <div className="mt-4 text-xs text-gray-500">
+        Replace the email with your real inbox address.
+      </div>
+    </div>
+  </section>
+);
+
+const About = () => (
+  <section id="about" className="mx-auto max-w-7xl px-4 py-16 md:px-6">
+    <div className="grid items-center gap-8 md:grid-cols-2">
+      <div>
+        <h2 className="text-3xl font-semibold md:text-4xl text-green-800">
+          Why Choose Cover2 Solutions?
+        </h2>
+        <p className="mt-4 text-gray-600">
+          We deliver dependable cleaning that protects your image, assets, and staff well-being.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {["Bonded & Insured", "Custom Cleaning Plans", "Eco-Friendly Products", "Trusted Local Teams"].map(
+            (item) => (
+              <div key={item} className="rounded-2xl border p-4 text-sm">
+                {item}
+              </div>
+            )
+          )}
+        </div>
+      </div>
+      <SmartImg
+        staticSrc={STATIC_IMAGES.about}
+        fallbackSrc={FALLBACK_IMAGES.about}
+        alt="Office cleaning after hours"
+        className="aspect-[16/11] w-full rounded-2xl object-cover"
+      />
+    </div>
+  </section>
+);
+
+const Contact = () => (
+  <section id="contact" className="mx-auto max-w-7xl px-4 py-16 md:px-6">
+    <div className="mx-auto max-w-2xl text-center">
+      <h2 className="text-3xl font-semibold md:text-4xl text-green-800">
+        Contact Us
+      </h2>
+      <p className="mt-2 text-gray-600">
+        We’re ready to keep your facilities spotless. Ask about our service packages today.
+      </p>
+    </div>
+
+    <div className="mx-auto mt-8 grid max-w-2xl gap-4">
+      <div className="flex items-center justify-center gap-3 rounded-2xl border p-4 text-sm">
+        📞 (555) 000-0000
+      </div>
+      <div className="flex items-center justify-center gap-3 rounded-2xl border p-4 text-sm">
+        ✉️ info@cover2solutions.net
+      </div>
+      <a href={PAYMENT_PORTAL_URL} className="mx-auto w-full max-w-sm">
+        <button className="w-full rounded-2xl bg-green-700 py-3 text-base font-medium text-white hover:bg-green-800">
+          Go to Payment Portal
+        </button>
+      </a>
+    </div>
+  </section>
+);
+
+const Footer = () => (
+  <footer className="border-t bg-white">
+    <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-gray-600 md:flex-row md:px-6">
+      <p>
+        © {new Date().getFullYear()} Cover2 Solutions. All rights reserved.
+        Bonded Commercial Janitorial Service.
+      </p>
+      <div className="flex items-center gap-6">
+        <a href="#history" className="hover:underline">
+          History
+        </a>
+        <a href="#quote" className="hover:underline">
+          Quotes
+        </a>
+        <a href="#email" className="hover:underline">
+          Email
+        </a>
+        <a href={PAYMENT_PORTAL_URL} className="hover:underline">
+          Payments
+        </a>
+      </div>
+    </div>
+  </footer>
+);
+
+export default function Cover2SolutionsSite() {
+  return (
+    <div className="min-h-screen bg-white text-gray-900">
+      <Nav />
+      <Hero />
+      <Services />
+      <HistorySection />
+      <QuoteSection />
+      <EmailSection />
+      <About />
+      <Contact />
+      <Footer />
+    </div>
+  );
+}
